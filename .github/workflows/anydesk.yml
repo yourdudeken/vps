@@ -1,36 +1,49 @@
-name: Temporary Linux VPS with AnyDesk
+name: Setup RDP on Debian
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: 
 
 jobs:
-  setup-anydesk:
+  setup-rdp:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Install Prerequisites
+      - name: Set up RDP on Debian
         run: |
+          # Update and install dependencies
+          echo "Updating system and installing dependencies..."
           sudo apt update && sudo apt upgrade -y
-          sudo apt install -y wget gnupg2 curl software-properties-common
+          sudo apt install -y wget tasksel
 
-      - name: Install AnyDesk
-        run: |
-          wget -qO - https://keys.anydesk.com/repos/DEB-GPG-KEY | sudo apt-key add -
-          echo "deb http://deb.anydesk.com/ all main" | sudo tee /etc/apt/sources.list.d/anydesk.list
-          sudo apt update
-          sudo apt install -y anydesk || exit 1
+          # Install Chrome Remote Desktop
+          echo "Installing Chrome Remote Desktop..."
+          wget https://dl.google.com/linux/direct/chrome-remote-desktop_current_amd64.deb
+          sudo dpkg --install chrome-remote-desktop_current_amd64.deb || sudo apt install -y --fix-broken
 
-      - name: Start AnyDesk Service
-        run: |
-          sudo systemctl restart anydesk.service
-          sudo systemctl status anydesk.service
+          # Install XFCE Desktop Environment
+          echo "Installing XFCE Desktop Environment..."
+          sudo DEBIAN_FRONTEND=noninteractive apt install -y xfce4 xfce4-terminal desktop-base xscreensaver
+          echo "exec /etc/X11/Xsession /usr/bin/xfce4-session" | sudo tee /etc/chrome-remote-desktop-session
+          sudo systemctl disable lightdm.service
 
-      - name: Display AnyDesk Address
-        run: |
-          echo "AnyDesk installed. Use the AnyDesk address below to connect:"
-          anydesk --get-id || echo "Failed to retrieve AnyDesk ID. Check logs above."
+          # Install Google Chrome
+          echo "Installing Google Chrome..."
+          wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+          sudo dpkg --install google-chrome-stable_current_amd64.deb || sudo apt install -y --fix-broken
 
-      - name: Debug Information
-        run: |
-          sudo systemctl status anydesk.service
-          sudo journalctl -u anydesk.service
+          # Finalize setup
+          echo "Finalizing setup..."
+          sudo usermod -aG chrome-remote-desktop $USER
+          
+          # Set up Chrome Remote Desktop with CRP and PIN
+          if [[ -z "${{ secrets.CRP_COMMAND }}" || -z "${{ secrets.RDP_PIN }}" ]]; then
+              echo "Error: CRP_COMMAND and RDP_PIN secrets must be set in the repository."
+              exit 1
+          fi
+
+          echo "Executing CRP setup..."
+          eval "${{ secrets.CRP_COMMAND }} --pin=${{ secrets.RDP_PIN }}"
+
+          # Start Chrome Remote Desktop Service
+          sudo service chrome-remote-desktop start
+
+          echo "RDP setup complete. Access it via https://remotedesktop.google.com/access."
