@@ -1,0 +1,34 @@
+name: Debian Linux with GRD
+
+on:
+  workflow_dispatch:
+
+jobs:
+  setup-grd:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Prepare Debian Environment
+      run: |
+        echo "Updating system..."
+        sudo apt update
+        sudo apt install -y wget tasksel
+
+        echo "Installing Desktop Environment..."
+        sudo tasksel install xfce-desktop
+
+        echo "Installing Google Chrome..."
+        wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+        sudo dpkg -i google-chrome-stable_current_amd64.deb || sudo apt-get install -f -y
+
+        echo "Installing Google Remote Desktop..."
+        wget https://dl.google.com/linux/direct/chrome-remote-desktop_current_amd64.deb
+        sudo dpkg -i chrome-remote-desktop_current_amd64.deb || sudo apt-get install -f -y
+
+        echo "Starting Chrome Remote Desktop service..."
+        sudo systemctl enable chrome-remote-desktop
+        sudo systemctl start chrome-remote-desktop
+
+    - name: Keep Workflow Running
+      run: |
+        echo "Workflow is active. Please link GRD using the generated command."
+        while true; do sleep 60; done
