@@ -35,6 +35,7 @@ jobs:
       run: |
         echo "Please generate your GRD command from https://remotedesktop.google.com/headless (Debian section)."
         echo "Paste the command below and rerun the workflow."
+        DISPLAY= /opt/google/chrome-remote-desktop/start-host --code="4/0AanRRrvFzFbKWD6cojqD08lrZ-TPglqEgGBrwFk_fd8MZzo35lGvkrh4UbMpROpX40peTg" --redirect-url="https://remotedesktop.google.com/_/oauthredirect" --name=$(hostname)
 
     - name: Keep Workflow Running
       run: |
