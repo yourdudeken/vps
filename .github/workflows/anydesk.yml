@@ -1,7 +1,7 @@
 name: Temporary Linux VPS with AnyDesk
 
 on:
-  workflow_dispatch:  # Allows you to manually start this workflow
+  workflow_dispatch:
 
 jobs:
   setup-anydesk:
@@ -18,14 +18,19 @@ jobs:
           wget -qO - https://keys.anydesk.com/repos/DEB-GPG-KEY | sudo apt-key add -
           echo "deb http://deb.anydesk.com/ all main" | sudo tee /etc/apt/sources.list.d/anydesk.list
           sudo apt update
-          sudo apt install -y anydesk
+          sudo apt install -y anydesk || exit 1
+
+      - name: Start AnyDesk Service
+        run: |
+          sudo systemctl restart anydesk.service
+          sudo systemctl status anydesk.service
 
       - name: Display AnyDesk Address
         run: |
           echo "AnyDesk installed. Use the AnyDesk address below to connect:"
-          anydesk --get-id
+          anydesk --get-id || echo "Failed to retrieve AnyDesk ID. Check logs above."
 
-      - name: Keep the Workflow Active
+      - name: Debug Information
         run: |
-          echo "Workflow running. Do not close this session."
-          while true; do sleep 60; done
+          sudo systemctl status anydesk.service
+          sudo journalctl -u anydesk.service
