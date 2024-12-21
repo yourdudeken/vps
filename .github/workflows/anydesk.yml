@@ -1,7 +1,7 @@
 name: Setup RDP on Debian
 
 on:
-  workflow_dispatch: 
+  workflow_dispatch:
 
 jobs:
   setup-rdp:
@@ -22,18 +22,18 @@ jobs:
           # Install XFCE Desktop Environment
           echo "Installing XFCE Desktop Environment..."
           sudo DEBIAN_FRONTEND=noninteractive apt install -y xfce4 xfce4-terminal desktop-base xscreensaver
-          echo "exec /etc/X11/Xsession /usr/bin/xfce4-session" | sudo tee /etc/chrome-remote-desktop-session
-          sudo systemctl disable lightdm.service
+          echo "exec /usr/bin/xfce4-session" | sudo tee /etc/chrome-remote-desktop-session
 
           # Install Google Chrome
           echo "Installing Google Chrome..."
           wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
           sudo dpkg --install google-chrome-stable_current_amd64.deb || sudo apt install -y --fix-broken
 
-          # Finalize setup
-          echo "Finalizing setup..."
-          sudo usermod -aG chrome-remote-desktop $USER
-          
+          # Restart Necessary Services
+          echo "Restarting updated services..."
+          sudo systemctl restart php8.1-fpm.service || echo "php8.1-fpm.service not found"
+          sudo systemctl restart user@1001.service || echo "user@1001.service not found"
+
           # Set up Chrome Remote Desktop with CRP and PIN
           if [[ -z "${{ secrets.CRP_COMMAND }}" || -z "${{ secrets.RDP_PIN }}" ]]; then
               echo "Error: CRP_COMMAND and RDP_PIN secrets must be set in the repository."
