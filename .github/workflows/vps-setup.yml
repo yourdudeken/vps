@@ -1,0 +1,27 @@
+name: Linux VPS Setup
+
+on:
+  workflow_dispatch:
+
+jobs:
+  setup-vps:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Set up VPS-like environment
+      run: |
+        echo "Installing necessary packages..."
+        sudo apt update && sudo apt install -y openssh-server net-tools
+        echo "Configuring SSH server..."
+        sudo systemctl enable ssh
+        sudo systemctl start ssh
+        echo "root:password" | sudo chpasswd  # Set root password
+        echo "PermitRootLogin yes" | sudo tee -a /etc/ssh/sshd_config
+        echo "PasswordAuthentication yes" | sudo tee -a /etc/ssh/sshd_config
+        sudo systemctl restart ssh
+        echo "Your GitHub Runner's Public IP:"
+        curl ifconfig.me
+        
+    - name: Keep VPS Running
+      run: |
+        echo "Keeping runner alive..."
+        while true; do sleep 60; done
